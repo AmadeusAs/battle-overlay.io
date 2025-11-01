@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Battle Stats</title>
+  <style>
+    body {
+      font-family: Inter, Arial, sans-serif;
+      margin: 20px;
+    }
+    label, select, input, button {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+    input, select {
+      width: 200px;
+      padding: 6px;
+    }
+    button {
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    .btn-add { background: #0077cc; color: #fff; border: none; border-radius: 6px; }
+    .btn-reset { background: #cc3333; color: #fff; border: none; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h2>Admin — управление статистикой</h2>
+
+  <label for="result">Результат боя:</label>
+  <select id="result">
+    <option value="win">Победа</option>
+    <option value="lose">Поражение</option>
+  </select>
+
+  <label for="damage">Урон (0–10000):</label>
+  <input type="number" id="damage" min="0" max="10000" value="0" />
+
+  <button class="btn-add" onclick="addBattle()">Добавить бой</button>
+  <button class="btn-reset" onclick="resetStats()">Сбросить статистику</button>
+
+  <script type="module">
+    const firebaseConfig = {
+  apiKey: "AIzaSyD4HtvEhsKMMfSL_XBl5Ptv0qS7TOFwXZk",
+  authDomain: "battle-overlay.firebaseapp.com",
+  databaseURL: "https://battle-overlay-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "battle-overlay",
+  storageBucket: "battle-overlay.firebasestorage.app",
+  messagingSenderId: "506479728625",
+  appId: "1:506479728625:web:0eb3b462ac2a5820cfd650",
+  measurementId: "G-2Z3N8N15BQ"
+};
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.30.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.30.0/firebase-database.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const statsRef = ref(db, "battleStats");
+
+    let battles = 0;
+    let wins = 0;
+    let totalDamage = 0;
+
+    onValue(statsRef, (snapshot) => {
+      const data = snapshot.val();
+      if(data){
+        battles = data.battles || 0;
+        wins = data.wins || 0;
+        totalDamage = data.totalDamage || 0;
+      }
+    });
+
+    function addBattle() {
+      const result = document.getElementById("result").value;
+      let damage = parseInt(document.getElementById("damage").value) || 0;
+      damage = Math.max(0, Math.min(10000, damage));
+
+      battles++;
+      if(result === "win") wins++;
+      totalDamage += damage;
+
+      saveStats();
+    }
+
+    function resetStats() {
+      if(!confirm("Сбросить всю статистику?")) return;
+      battles = 0; wins = 0; totalDamage = 0;
+      saveStats();
+    }
+
+    function saveStats() {
+      set(statsRef, {
+        battles: battles,
+        wins: wins,
+        totalDamage: totalDamage
+      }).catch(e => console.error("Ошибка записи в Firebase:", e));
+    }
+  </script>
+</body>
+</html>
