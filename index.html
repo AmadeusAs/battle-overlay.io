@@ -157,15 +157,16 @@
   <!-- Firebase + логика -->
   <script type="module">
     // ВСТАВЬ СВОЙ FIREBASE CONFIG СЮДА:
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-      projectId: "YOUR_PROJECT",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "XXXX",
-      appId: "XXXXXXXX"
-    };
+   const firebaseConfig = {
+      apiKey: "AIzaSyD4HtvEhsKMMfSL_XBl5Ptv0qS7TOFwXZk",
+      authDomain: "battle-overlay.firebaseapp.com",
+      databaseURL: "https://battle-overlay-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "battle-overlay",
+      storageBucket: "battle-overlay.firebasestorage.app",
+      messagingSenderId: "506479728625",
+      appId: "1:506479728625:web:0eb3b462ac2a5820cfd650",
+      measurementId: "G-2Z3N8N15BQ"
+};    
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
