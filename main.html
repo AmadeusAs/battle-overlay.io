@@ -1,136 +1,171 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=354, height=1080, initial-scale=1.0" />
-  <title>Боевые результаты (Overlay)</title>
+  <title>Overlay — Battle Stats</title>
   <style>
+    :root{
+      /* Цвет текста внутри прямоугольников.
+         По умолчанию чёрный для читаемости. 
+         Если хочешь белый текст внутри белого прямоугольника — поставь #fff, но он будет невидим. */
+      --rect-text: #000000;
+      --rect-border: #000000;
+      --page-bg: #ffffff;
+    }
+
     html, body {
+      width: 354px;
+      height: 1080px;
       margin: 0;
       padding: 0;
-      width: 354px;
-      height: 1080px;
-      background: transparent;
-      font-family: "Arial", sans-serif;
-      color: #fff;
-      overflow: hidden;
+      background: var(--page-bg);
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      color: #000;
+      overflow: hidden; /* скрываем скролл в окне оверлея */
     }
 
-    .overlay-box {
+    /* Основной блок строго 354 x 1080 */
+    .overlay-root {
+      box-sizing: border-box;
       width: 354px;
       height: 1080px;
-      background: rgba(0, 0, 0, 0.65);
+      padding: 18px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      border-radius: 25px;
+      gap: 24px;
+      position: relative;
+    }
+
+    /* Прямоугольники с белым фоном и чёрной рамкой */
+    .stat-rect {
+      width: 300px;           /* чуть меньше ширины, чтобы был отступ слева/справа */
+      padding: 18px 14px;
+      background: #ffffff;
+      border: 2px solid var(--rect-border);
+      border-radius: 8px;
       box-sizing: border-box;
-      padding: 30px 10px;
-      text-align: center;
-      box-shadow: 0 0 20px rgba(0,255,255,0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      /* тень выключена — чистый стиль */
     }
 
-    h2 {
-      margin: 0 0 20px 0;
-      font-size: 28px;
-      color: #00ffff;
+    .stat-value {
+      font-size: 40px;
+      font-weight: 700;
+      color: var(--rect-text);
+      line-height: 1;
     }
 
-    .stats {
-      font-size: 22px;
-      line-height: 1.8em;
-      margin-bottom: 30px;
+    .stat-label {
+      font-size: 14px;
+      color: rgba(0,0,0,0.7);
     }
 
-    label {
-      display: block;
-      margin-top: 10px;
-      font-size: 18px;
+    /* Контейнер для админских контролов — смещён ниже видимой области */
+    .admin-panel {
+      position: absolute;
+      top: 1100px; /* за пределом 1080px — не видно в StreamChamp */
+      left: 0;
+      width: 354px;
+      padding: 12px;
+      box-sizing: border-box;
+      background: transparent;
+      color: #000;
     }
 
-    input, select {
-      font-size: 18px;
-      padding: 5px 10px;
-      border-radius: 10px;
-      border: none;
-      margin-top: 5px;
+    /* Внутри админки (для удобства ввода) */
+    .admin-row {
+      margin-bottom: 8px;
     }
-
+    input[type="number"], select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
     button {
-      font-size: 18px;
-      margin-top: 15px;
-      padding: 8px 20px;
+      width: 100%;
+      padding: 10px;
       border: none;
-      border-radius: 12px;
+      border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
-      transition: background 0.2s;
-      color: #fff;
+      margin-top: 6px;
     }
+    .btn-add { background: #0077cc; color: #fff; }
+    .btn-reset { background: #cc3333; color: #fff; }
 
-    .add-btn {
-      background: #00aaff;
-    }
-
-    .add-btn:hover {
-      background: #0088cc;
-    }
-
-    .reset-btn {
-      background: #ff4444;
-    }
-
-    .reset-btn:hover {
-      background: #cc2222;
-    }
-
-    hr {
-      width: 80%;
-      border: 1px solid rgba(255,255,255,0.2);
-      margin: 20px 0;
-    }
+    /* Небольшая помощь: при наведении на прямоугольники подсветка (не критично) */
+    .stat-rect:hover { transform: translateY(-2px); transition: transform .12s ease; }
   </style>
 </head>
 <body>
-  <div class="overlay-box">
-    <h2>Статистика боёв</h2>
+  <div class="overlay-root">
+    <!-- убран заголовок "Статистика боёв" по требованию -->
 
-    <div class="stats">
-      <div>Всего боёв: <span id="battles">0</span></div>
-      <div>Побед: <span id="wins">0</span></div>
-      <div>Процент побед: <span id="winRate">0%</span></div>
-      <div>Средний урон: <span id="avgDamage">0</span></div>
+    <!-- Всего боёв -->
+    <div class="stat-rect" aria-label="Всего боёв">
+      <div class="stat-value" id="battles">0</div>
+      <div class="stat-label">Всего боёв</div>
     </div>
 
-    <hr>
+    <!-- Процент побед -->
+    <div class="stat-rect" aria-label="Процент побед">
+      <div class="stat-value" id="winRate">0%</div>
+      <div class="stat-label">Процент побед</div>
+    </div>
 
-    <div>
-      <label for="result">Результат боя:</label>
-      <select id="result">
-        <option value="win">Победа</option>
-        <option value="lose">Поражение</option>
-      </select>
+    <!-- Средний урон -->
+    <div class="stat-rect" aria-label="Средний урон">
+      <div class="stat-value" id="avgDamage">0</div>
+      <div class="stat-label">Средний урон</div>
+    </div>
 
-      <label for="damage">Урон:</label>
-      <input type="number" id="damage" min="0" max="10000" value="0" />
+    <!-- пустое пространство, всё остальное смещено вниз и не видно на стриме -->
+    <div style="flex:1"></div>
 
-      <button class="add-btn" onclick="addBattle()">Добавить бой</button>
-      <button class="reset-btn" onclick="resetStats()">Сбросить</button>
+    <!-- админка — за пределом 1080px -->
+    <div class="admin-panel" id="adminPanel">
+      <div class="admin-row">
+        <label for="result">Результат боя:</label>
+        <select id="result">
+          <option value="win">Победа</option>
+          <option value="lose">Поражение</option>
+        </select>
+      </div>
+
+      <div class="admin-row">
+        <label for="damage">Урон (0–10000):</label>
+        <input id="damage" type="number" min="0" max="10000" value="0" />
+        </div>
+
+      <button class="btn-add" onclick="addBattle()">Добавить бой</button>
+      <button class="btn-reset" onclick="resetStats()">Сбросить статистику</button>
+
+      <div style="height:8px"></div>
+      <div style="font-size:12px;color:#444">Админ-панель скрыта в области 354×1080 — прокрути страницу вниз или открой на телефоне, чтобы управлять.</div>
     </div>
   </div>
 
-  <!-- Firebase -->
+  <!-- Firebase + логика -->
   <script type="module">
-    // ⚠️ ВСТАВЬ СВОЙ КОНФИГ ИЗ FIREBASE:
+    // ВСТАВЬ СВОЙ FIREBASE CONFIG СЮДА:
     const firebaseConfig = {
-      apiKey: "AIzaSyD4HtvEhsKMMfSL_XBl5Ptv0qS7TOFwXZk",
-      authDomain: "battle-overlay.firebaseapp.com",
-      projectId: "battle-overlay",
-      storageBucket: "battle-overlay.firebasestorage.app",
-      messagingSenderId: "506479728625",
-      appId: "1:506479728625:web:0eb3b462ac2a5820cfd650",
-      measurementId: "G-2Z3N8N15BQ"
-};
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "XXXX",
+      appId: "XXXXXXXX"
+    };
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
@@ -139,11 +174,12 @@
     const db = getDatabase(app);
     const statsRef = ref(db, "battleStats");
 
+    // Локальные счётчики
     let battles = 0;
-    let wins = 0;
+    let wins = 0;        // нужен для расчёта процента, но не отображается как отдельный блок
     let totalDamage = 0;
 
-    // 🔄 Получаем данные в реальном времени
+    // Подписываемся на изменения в базе
     onValue(statsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -151,41 +187,59 @@
         wins = data.wins || 0;
         totalDamage = data.totalDamage || 0;
         updateDisplay();
+      } else {
+        // если в базе ничего нет — оставляем 0
+        battles = 0; wins = 0; totalDamage = 0;
+        updateDisplay();
       }
+    }, (err) => {
+      console.error("Firebase read error:", err);
     });
 
+    // Добавить бой (админ)
     function addBattle() {
       const result = document.getElementById("result").value;
-      const damage = parseInt(document.getElementById("damage").value) || 0;
+      const damage = parseInt(document.getElementById("damage").value, 10) || 0;
+      // валидация диапазона
+      const clampedDamage = Math.max(0, Math.min(10000, damage));
 
       battles++;
       if (result === "win") wins++;
-      totalDamage += damage;
+      totalDamage += clampedDamage;
 
       saveStats();
     }
 
+    // Сброс
     function resetStats() {
       if (!confirm("Сбросить всю статистику?")) return;
-      battles = 0;
-      wins = 0;
-      totalDamage = 0;
+      battles = 0; wins = 0; totalDamage = 0;
       saveStats();
     }
 
+    // Сохранение в Firebase
     function saveStats() {
-      set(statsRef, { battles, wins, totalDamage });
+      set(statsRef, {
+        battles: battles,
+        wins: wins,
+        totalDamage: totalDamage
+      }).catch((e) => console.error("Firebase write error:", e));
+      // обновление UI произойдёт по onValue из базы (в том числе и на других подключённых клиентах)
     }
 
+    // Обновление отображения в DOM
     function updateDisplay() {
       const winRate = battles > 0 ? ((wins / battles) * 100).toFixed(1) : 0;
-      const avgDamage = battles > 0 ? (totalDamage / battles).toFixed(0) : 0;
+      const avgDamage = battles > 0 ? Math.round(totalDamage / battles) : 0;
 
       document.getElementById("battles").textContent = battles;
-      document.getElementById("wins").textContent = wins;
       document.getElementById("winRate").textContent = winRate + "%";
       document.getElementById("avgDamage").textContent = avgDamage;
     }
+
+    // Инициализация: подстраховка — если в базе ничего нет, установим нули (необязательно)
+    // Можно раскомментировать, если хочешь, чтобы база всегда имела узел:
+    // saveStats();
   </script>
 </body>
 </html>
