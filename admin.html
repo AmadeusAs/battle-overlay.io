@@ -9,21 +9,49 @@
       font-family: Inter, Arial, sans-serif;
       margin: 20px;
     }
+
     label, select, input, button {
       display: block;
       margin-bottom: 12px;
       font-size: 16px;
     }
+
     input, select {
       width: 200px;
       padding: 6px;
     }
+
     button {
       padding: 8px 16px;
       cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: transform 0.1s ease, background-color 0.15s ease;
     }
-    .btn-add { background: #0077cc; color: #fff; border: none; border-radius: 6px; }
-    .btn-reset { background: #cc3333; color: #fff; border: none; border-radius: 6px; }
+
+    /* анимация нажатия */
+    button:active {
+      transform: scale(0.95);
+    }
+
+    .btn-add {
+      background-color: #0077cc;
+      color: #fff;
+    }
+
+    .btn-add:active {
+      background-color: #005fa3;
+    }
+
+    .btn-reset {
+      background-color: #cc3333;
+      color: #fff;
+    }
+
+    .btn-reset:active {
+      background-color: #991f1f;
+    }
   </style>
 </head>
 <body>
@@ -38,20 +66,20 @@
   <label for="damage">Урон (0–10000):</label>
   <input type="number" id="damage" min="0" max="10000" value="0" />
 
-  <button class="btn-add" onclick="addBattle()">Добавить бой</button>
-  <button class="btn-reset" onclick="resetStats()">Сбросить статистику</button>
+  <button id="btnAdd" class="btn-add">Добавить бой</button>
+  <button id="btnReset" class="btn-reset">Сбросить статистику</button>
 
   <script type="module">
+    // Вставь свой Firebase config:
     const firebaseConfig = {
-  apiKey: "AIzaSyD4HtvEhsKMMfSL_XBl5Ptv0qS7TOFwXZk",
-  authDomain: "battle-overlay.firebaseapp.com",
-  databaseURL: "https://battle-overlay-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "battle-overlay",
-  storageBucket: "battle-overlay.firebasestorage.app",
-  messagingSenderId: "506479728625",
-  appId: "1:506479728625:web:0eb3b462ac2a5820cfd650",
-  measurementId: "G-2Z3N8N15BQ"
-};
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "XXXX",
+      appId: "XXXXXXXX"
+    };
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
@@ -64,14 +92,23 @@
     let wins = 0;
     let totalDamage = 0;
 
+    // слушаем изменения базы
     onValue(statsRef, (snapshot) => {
       const data = snapshot.val();
-      if(data){
+      if (data) {
         battles = data.battles || 0;
         wins = data.wins || 0;
         totalDamage = data.totalDamage || 0;
       }
     });
+
+    function flashButton(btn) {
+      const originalColor = btn.style.backgroundColor;
+      btn.style.backgroundColor = '#33aa33'; // зеленый для подтверждения
+      setTimeout(() => {
+        btn.style.backgroundColor = originalColor;
+      }, 150);
+    }
 
     function addBattle() {
       const result = document.getElementById("result").value;
@@ -79,16 +116,18 @@
       damage = Math.max(0, Math.min(10000, damage));
 
       battles++;
-      if(result === "win") wins++;
+      if (result === "win") wins++;
       totalDamage += damage;
 
       saveStats();
+      flashButton(document.getElementById("btnAdd"));
     }
 
     function resetStats() {
-      if(!confirm("Сбросить всю статистику?")) return;
+      if (!confirm("Сбросить всю статистику?")) return;
       battles = 0; wins = 0; totalDamage = 0;
       saveStats();
+      flashButton(document.getElementById("btnReset"));
     }
 
     function saveStats() {
@@ -98,6 +137,10 @@
         totalDamage: totalDamage
       }).catch(e => console.error("Ошибка записи в Firebase:", e));
     }
+
+    // Привязываем обработчики через JS, чтобы работало в модуле
+    document.getElementById("btnAdd").addEventListener("click", addBattle);
+    document.getElementById("btnReset").addEventListener("click", resetStats);
   </script>
 </body>
 </html>
